@@ -1,4 +1,4 @@
-from tkinter import Tk, Button, Label, Entry, Text, Scrollbar, END
+from tkinter import Tk, Button, Label, Entry, Text, Scrollbar, END, messagebox
 import threading
 import time
 
@@ -53,6 +53,7 @@ class NetworkToolGUI:
     def display_results_in_new_window(self, results: str):
         """ Display the results in a new window that does not block the main GUI."""
         result_window = Tk()
+        result_window.geometry("600x400")
         result_window.title("Results")
         result_label = Label(result_window, text=results)
         result_label.pack()
@@ -60,10 +61,16 @@ class NetworkToolGUI:
 
     def arp_scan(self, subnet: str):
         """Scan the specified subnet for active devices."""
-        results = ARPScanner.scan(subnet)
-        # convert the results to a string
-        results = "\n".join([f"{ip} - {mac}" for ip, mac in results.items()])
-        self.display_results_in_new_window(results)
+
+        # validate the subnet str
+        if not subnet or not (subnet.count(".") == 3 or subnet.count("/") == 1 or [x.isdigit() or x == '/' for x in subnet.split(".")]):
+            messagebox.showerror("Invalid Subnet", "Please enter a valid subnet format, i.e., 192.168.1.0/24")
+            return
+
+        thread = threading.Thread(target=ARPScanner.scan, args=(subnet, self.display_results_in_new_window,))
+        thread.start()
+
+        messagebox.showinfo("ARP Scan", "ARP scan started. Results will be displayed shortly.")
 
     def packet_sniffer(self, ip: str, protocol: str):
         """Start sniffing packets based on the specified IP and protocol."""
