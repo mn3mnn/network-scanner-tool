@@ -22,16 +22,25 @@ class PacketSniffer:
     def __init__(self, ip_filter=None, protocol_filter=None, log_file: str = None, gui_callback=None):
         self.ip_filter = ip_filter
         self.protocol_filter = protocol_filter
-        #todo: validate filters
 
         self.packets_logger = _Logger(log_file) if log_file else None
 
         self.gui_callback = gui_callback
 
+        self._stop_sniffing = False
+
+    def stop_sniffing(self):
+        """Stop capturing packets."""
+        self._stop_sniffing = True
+
+    def _stop_sniffing_filter(self, packet):
+        return self._stop_sniffing
+
     def start_sniffing(self):
         """Start capturing packets."""
-        #todo: check it
-        scapy.sniff(prn=self._packet_callback, filter=self.protocol_filter, store=False)
+        self._stop_sniffing = False
+
+        scapy.sniff(prn=self.packet_callback, store=False, stop_filter=self._stop_sniffing_filter)
 
     def start_logging(self, log_file_name: str):
         self.packets_logger = _Logger(log_file_name)
@@ -39,7 +48,7 @@ class PacketSniffer:
     def stop_logging(self):
         self.packets_logger = None
 
-    def _packet_callback(self, packet):
+    def packet_callback(self, packet):
         if self._is_matching_packet(packet):
             # print(packet.summary())
 
@@ -52,12 +61,10 @@ class PacketSniffer:
     def _is_matching_packet(self, packet):
         """Check if the packet matches the filters."""
 
-        #todo: check it
-
-        # if self.ip_filter and packet.haslayer(IP) and self.ip_filter not in [packet[IP].src, packet[IP].dst]:
-        #     return False
-        # if self.protocol_filter and not packet.haslayer(self.protocol_filter):
-        #     return False
+        if self.ip_filter and packet.haslayer(IP) and self.ip_filter not in [packet[IP].src, packet[IP].dst]:
+            return False
+        if self.protocol_filter and not packet.haslayer(self.protocol_filter):
+            return False
         return True
 
 
