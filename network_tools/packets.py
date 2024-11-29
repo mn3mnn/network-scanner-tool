@@ -1,4 +1,5 @@
 import threading
+import ipaddress
 
 import scapy.all as scapy
 from scapy.layers.inet import IP, TCP, UDP, ICMP
@@ -68,29 +69,57 @@ class PacketSniffer:
         return True
 
 
+# class PacketSender:
+#     """Sends custom packets to a target IP."""
+#
+#     @staticmethod
+#     def send(target_ip: str, protocol: str) -> None:
+#         """Send a custom packet based on the specified protocol.
+#         :param target_ip: The target IP address.
+#         :param protocol: The protocol to use ("ICMP", "TCP", "UDP").
+#         """
+#
+#         #todo: check it
+#
+#         protocols = {
+#             "ICMP": IP(dst=target_ip) / ICMP(),
+#             "TCP": IP(dst=target_ip) / TCP(dport=80, flags="S"),
+#             "UDP": IP(dst=target_ip) / UDP(dport=53),
+#         }
+#         packet = protocols.get(protocol, None)
+#         if packet:
+#             scapy.send(packet, verbose=False)
+#             print(f"Packet sent to {target_ip} using {protocol}.")
+#         else:
+#             print("Invalid protocol specified.")
+
 class PacketSender:
     """Sends custom packets to a target IP."""
-
     @staticmethod
-    def send(target_ip: str, protocol: str) -> None:
-        """Send a custom packet based on the specified protocol.
-        :param target_ip: The target IP address.
-        :param protocol: The protocol to use ("ICMP", "TCP", "UDP").
-        """
+    def send(target_ip: str, protocol: str) -> bool:
+        try:
+            """Validate IP address"""
+            ipaddress.ip_address(target_ip)
 
-        #todo: check it
+            """Define Packets"""
+            protocols = {
+                "ICMP": IP(dst=target_ip) / ICMP(),
+                "TCP": IP(dst=target_ip) / TCP(dport=80, flags="S"),
+                "UDP": IP(dst=target_ip) / UDP(dport=53),
+            }
 
-        protocols = {
-            "ICMP": IP(dst=target_ip) / ICMP(),
-            "TCP": IP(dst=target_ip) / TCP(dport=80, flags="S"),
-            "UDP": IP(dst=target_ip) / UDP(dport=53),
-        }
-        packet = protocols.get(protocol, None)
-        if packet:
+            """Validate protocol"""
+            if protocol not in protocols:
+                raise ValueError(f"Unsupported protocol: {protocol}")
+
+            """send the packets"""
+            packet = protocols[protocol]
             scapy.send(packet, verbose=False)
             print(f"Packet sent to {target_ip} using {protocol}.")
-        else:
-            print("Invalid protocol specified.")
+            return True
+        except Exception as e:
+            print(f"Failed to send packet: {e}")
+            return False
 
 
 class NetworkPerformanceCalculator:
