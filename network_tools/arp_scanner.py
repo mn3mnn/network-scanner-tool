@@ -10,7 +10,7 @@ class ARPScanner:
         pass
 
     @staticmethod
-    def scan(subnet: str, gui_callback: callable) -> dict[str, str]:
+    def scan(subnet: str, gui_callback: callable):
         """
         :param subnet:
         :return: A dictionary of IP addresses and corresponding MAC addresses.
